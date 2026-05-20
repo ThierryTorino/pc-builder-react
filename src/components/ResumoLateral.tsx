@@ -36,7 +36,7 @@ export const ResumoLateral = () =>{
           return;
         }
 
-      const {data, error} = await supabase
+      const {error} = await supabase
       .from('setups_salvos')
       .insert([
         {
