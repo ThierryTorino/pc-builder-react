@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
+# 🖥️ PC Builder - Montador de PC Inteligente
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Um aplicativo web interativo e inteligente projetado para auxiliar usuários na simulação de montagem de computadores desktop. O sistema não apenas lista componentes, mas atua como um validador de hardware em tempo real, impedindo montagens incompatíveis que causariam falhas físicas ou elétricas no mundo real.
 
-Currently, two official plugins are available:
+🔗 **Link do Projeto (Vercel):** [https://pc-builder-react.vercel.app/]
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🚀 Tecnologias Utilizadas
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Este projeto foi construído utilizando as melhores práticas do ecossistema moderno do desenvolvimento Web:
 
-## Expanding the ESLint configuration
+- **[React (Vite)](https://react.dev/):** Biblioteca principal para a construção da interface reativa e componentizada.
+- **[TypeScript](https://www.typescriptlang.org/):** Adicionado para trazer tipagem estática segura, reduzindo erros em tempo de desenvolvimento.
+- **[Zustand](https://zustand-demo.pmnd.rs/):** Gerenciador de estado global robusto e ultra-leve, utilizado como o "Sistema ME" do projeto para centralizar o carrinho de compras.
+- **[Tailwind CSS](https://tailwindcss.com/):** Framework utilitário para estilização rápida, moderna e totalmente responsiva com tema escuro (*dark mode*).
+- **[React Toastify](https://fkhadra.github.io/react-toastify/introduction/):** Biblioteca para notificações flutuantes (*Toasts*) personalizadas, aprimorando a experiência do usuário (UX).
+- **[Supabase](https://supabase.com/):** Plataforma de banco de dados em nuvem que serve como nosso Backend-as-a-Service (BaaS).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🗄️ Arquitetura do Banco de Dados: PostgreSQL & Supabase
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+O coração dos dados da aplicação reside em um banco de dados relacional **PostgreSQL**, hospedado e gerenciado através do **Supabase**. A escolha do PostgreSQL permitiu o armazenamento estruturado com tipos de dados avançados (como `UUID` para chaves primárias seguras) e alta consistência transacional.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Abaixo está a estrutura das tabelas criadas no banco:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 1. Tabela `componentes`
+Armazena todo o estoque de peças disponíveis na loja, contendo especificações técnicas fundamentais para as regras de validação.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Coluna | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id` | `UUID` (PK) | Identificador único universal da peça. |
+| `nome` | `TEXT` | Nome comercial completo do componente. |
+| `categoria` | `TEXT` | Categoria do item (`CPU`, `GPU`, `PLACA_MAE`, `RAM`, `FONTE`, `ARMAZENAMENTO`). |
+| `preco` | `NUMERIC` | Preço em Reais (R$). |
+| `soquete` | `TEXT` (Nullable) | Tipo de soquete (ex: `AM4`, `AM5`, `LGA1700`). *Apenas para CPU e Placa-Mãe.* |
+| `consumo_watts`| `INT8` | Consumo elétrico estimado da peça sob carga. |
+| `tipo_ram` | `TEXT` (Nullable) | Geração de memória suportada (`DDR4`, `DDR5`). *Apenas para RAM e Placa-Mãe.* |
+| `potencia_fonte`| `INT8` (Nullable) | Potência máxima de entrega de energia. *Apenas para a categoria FONTE.* |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 2. Tabela `setups_salvos`
+Responsável por persistir os computadores montados e finalizados pelos usuários na plataforma (operação de `INSERT`).
+
+| Coluna | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id` | `UUID` (PK) | Identificador do setup gerado via `gen_random_uuid()`. |
+| `created_at` | `TIMESTAMP` | Data e hora automática do salvamento (`NOW()`). |
+| `cpu_id` | `UUID` | ID estrangeiro apontando para a CPU escolhida. |
+| `placa_mae_id` | `UUID` | ID estrangeiro apontando para a Placa-Mãe escolhida. |
+| `ram_id` | `UUID` (Nullable)| ID estrangeiro apontando para a Memória RAM escolhida. |
+| `gpu_id` | `UUID` (Nullable)| ID estrangeiro apontando para a Placa de Vídeo escolhida. |
+| `armazenamento_id`| `UUID` (Nullable)| ID estrangeiro apontando para o SSD/HD escolhido. |
+| `fonte_id` | `UUID` (Nullable)| ID estrangeiro apontando para a Fonte de Alimentação. |
+| `preco_total` | `NUMERIC` | Valor final do computador somado pelo sistema. |
+
+---
+
+## 🛡️ Regras de Negócio e Validações Inteligentes (Mão Dupla)
+
+Para garantir uma simulação realista e à prova de falhas, o aplicativo possui uma camada complexa de validações sob o padrão *Early Return*, protegendo o fluxo contra dados nulos (`null` pointer errors):
+
+1. **Compatibilidade de Processador (Soquete):**
+   - **Mão Dupla:** Se o usuário escolher uma Placa-Mãe primeiro, o sistema bloqueia CPUs de soquetes diferentes. Se escolher a CPU primeiro, o sistema bloqueia Placas-Mãe com encaixes diferentes.
+2. **Compatibilidade de Memória RAM (Geração DDR):**
+   - **Mão Dupla:** Impede o cruzamento de memórias `DDR4` em placas `DDR5` e vice-versa, validando de forma independente tanto na seleção do pente de RAM quanto na seleção da Placa-Mãe.
+3. **Cálculo de Carga Elétrica (Segurança da Fonte):**
+   - O sistema calcula de forma dinâmica o **Estado Derivado** do consumo de energia (soma de todos os Watts do setup). Se o usuário tentar adicionar uma Fonte cuja `potencia_fonte` seja inferior ao gasto atual acumulado, o sistema barra o componente e notifica o perigo elétrico.
+4. **Mutação Visual de Estado (Feedback de UX):**
+   - O aplicativo monitora os IDs das peças inseridas no estado global. Caso uma peça já pertença ao carrinho, o botão de seleção sofre uma mutação reativa: muda o texto para *"Adicionado"*, altera sua cor para cinza fosco e desabilita o clique (`disabled`), impedindo duplicidade acidental.
